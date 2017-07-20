@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="view_margin">16dp</dimen>
+    <dimen name="view_margin_small">8dp</dimen>
+    <dimen name="view_padding">16dp</dimen>
+    <dimen name="view_padding_small">8dp</dimen>
+
+</resources>

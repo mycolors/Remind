@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Remind</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_tab_main_1">事件</string>
+    <string name="title_tab_main_2">地点</string>
+</resources>
