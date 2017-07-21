@@ -19,8 +19,6 @@ public class Location {
 
     private double longitude;
 
-    private long createTime;
-
     public long getId() {
         return id;
     }
@@ -89,12 +87,4 @@ public class Location {
         this.longitude = longitude;
     }
 
-
-    public long getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(long createTime) {
-        this.createTime = createTime;
-    }
 }

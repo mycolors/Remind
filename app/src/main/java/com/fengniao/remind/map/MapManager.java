@@ -111,6 +111,18 @@ public class MapManager {
                 }
             }
         });
+
+        mBaiduMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+
+            }
+
+            @Override
+            public boolean onMapPoiClick(MapPoi mapPoi) {
+                return false;
+            }
+        });
     }
 
     public void setOnMapTouchListener(OnMapTouchListener listener) {

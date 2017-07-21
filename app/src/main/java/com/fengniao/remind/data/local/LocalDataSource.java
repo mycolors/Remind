@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.fengniao.remind.data.Location;
 
@@ -38,8 +37,8 @@ public class LocalDataSource {
         return INSTANCE;
     }
 
-    public void saveLocation(Location location) {
-        if (location == null) return;
+    public boolean saveLocation(Location location) {
+        if (location == null) return false;
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(_ID, System.currentTimeMillis());
@@ -50,8 +49,9 @@ public class LocalDataSource {
         values.put(COLUMN_NAME_POST_CODE, location.getPostCode());
         values.put(COLUMN_NAME_LATITUDE, location.getLatitude());
         values.put(COLUMN_NAME_LONGITUDE, location.getLongitude());
-        db.insert(TABLE_NAME, null, values);
+        long code = db.insert(TABLE_NAME, null, values);
         db.close();
+        return code != -1;
     }
 
 
@@ -86,7 +86,8 @@ public class LocalDataSource {
     public List<Location> getActivateLocation() {
         List<Location> list = new ArrayList<>();
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM Location WHERE _ID = ?", new String[]{1 + ""});
+        Cursor cursor = db.rawQuery("SELECT * FROM Location WHERE " + COLUMN_NAME_ACITVATE + " = ?",
+                new String[]{1 + ""});
         if (cursor != null && cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
                 Location location = new Location();
@@ -107,26 +108,27 @@ public class LocalDataSource {
     }
 
 
-    public void arrivedLocation(Location location) {
+    public boolean arrivedLocation(Location location) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACITVATE, false);
         String selection = _ID + " LIKE ?";
         String[] selectionArgs = {location.getId() + ""};
-        Log.i("test", "id    " + location.getId());
-        db.update(TABLE_NAME, values, selection, selectionArgs);
+        int code = db.update(TABLE_NAME, values, selection, selectionArgs);
         db.close();
+        return code > 0;
     }
 
 
-    public void activateLocation(Location location) {
+    public boolean activateLocation(Location location) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACITVATE, true);
         String selection = _ID + "LIKE ?";
         String[] selectionArgs = {location.getId() + ""};
-        db.update(TABLE_NAME, values, selection, selectionArgs);
+        int code = db.update(TABLE_NAME, values, selection, selectionArgs);
         db.close();
+        return code > 0;
     }
 
 

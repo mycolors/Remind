@@ -29,8 +29,6 @@ import android.widget.Toast;
 
 import com.baidu.mapapi.search.core.PoiInfo;
 import com.fengniao.remind.R;
-import com.fengniao.remind.data.Location;
-import com.fengniao.remind.data.local.LocalDataSource;
 import com.fengniao.remind.map.MapManager;
 import com.fengniao.remind.service.RemindService;
 import com.fengniao.remind.ui.SearchListAdapter;
@@ -280,13 +278,14 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
                 Toast.makeText(this, "请选择目的地", Toast.LENGTH_SHORT).show();
                 return false;
             }
-            Toast.makeText(this, mPresenter.getLatLng().latitude + "     " + mPresenter.getLatLng().longitude, Toast.LENGTH_SHORT).show();
-            Location location = mPresenter.getLocation();
-            if (location != null) {
-                location.setActivate(true);
-                LocalDataSource.getInstance(this).saveLocation(location);
+            if (mPresenter.saveLocation()) {
+                mBinder.startRemind();
+                setResult(RESULT_OK);
+                finish();
+            } else {
+                Toast.makeText(this, "选择目的地失败", Toast.LENGTH_SHORT).show();
+
             }
-            mBinder.startRemind();
         }
         return super.onOptionsItemSelected(item);
     }

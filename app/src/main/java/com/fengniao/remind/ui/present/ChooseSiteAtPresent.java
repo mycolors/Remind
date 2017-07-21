@@ -21,6 +21,7 @@ import com.baidu.mapapi.search.poi.PoiIndoorResult;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.fengniao.remind.data.Location;
+import com.fengniao.remind.data.local.LocalDataSource;
 import com.fengniao.remind.map.MapManager;
 import com.fengniao.remind.ui.base.BaseActivity;
 import com.fengniao.remind.ui.base.BasePresenter;
@@ -135,7 +136,7 @@ public class ChooseSiteAtPresent extends BasePresenter<ChooseSiteAtI> {
         if (getView().getMapManager().getMyLocation() != null) {
             city = getView().getMapManager().getMyLocation().getCity();
         }
-        if (TextUtils.isEmpty(city)){
+        if (TextUtils.isEmpty(city)) {
             city = "北京";
         }
         mPoiSearch.searchInCity(new PoiCitySearchOption().city(city).keyword(key));
@@ -146,8 +147,13 @@ public class ChooseSiteAtPresent extends BasePresenter<ChooseSiteAtI> {
         return mLatLng;
     }
 
-    public Location getLocation() {
-        return mLocation;
+    public boolean saveLocation() {
+        if (mLocation != null) {
+            mLocation.setActivate(true);
+            return LocalDataSource.getInstance(mContext).saveLocation(mLocation);
+        } else {
+            return false;
+        }
     }
 
 }
