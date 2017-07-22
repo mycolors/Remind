@@ -50,13 +50,33 @@ public class LocationListFragment extends BaseFragment {
         locationList.setLayoutManager(new LinearLayoutManager(getContext()));
         mAdapter = new LocationListAdapter(getContext(), mList);
         locationList.setAdapter(mAdapter);
+        mAdapter.setOnItemClickListener(new LocationListAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                if (mList.get(position).isActivate()) {
+                    if (LocalDataSource.getInstance(getContext()).arrivedLocation(
+                            mList.get(position))) {
+                            mList.get(position).setActivate(!mList.get(position).isActivate());
+                    }
+                } else {
+                    if (LocalDataSource.getInstance(getContext()).activateLocation(
+                            mList.get(position))) {
+                        mList.get(position).setActivate(!mList.get(position).isActivate());
+                    }
+                }
+                refreshList();
+            }
+        });
     }
 
+
+    public void resetList(){
+        mList = LocalDataSource.getInstance(getContext()).getAllLocation();
+        refreshList();
+    }
 
     public void refreshList() {
-        mList = LocalDataSource.getInstance(getContext()).getAllLocation();
         mAdapter.notifyDataSetChanged();
     }
-
 
 }

@@ -1,6 +1,9 @@
 package com.fengniao.remind.ui.activity;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -9,6 +12,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.fengniao.remind.R;
+import com.fengniao.remind.service.RemindService;
 import com.fengniao.remind.ui.adapter.FragmentAdapter;
 import com.fengniao.remind.ui.base.BaseActivity;
 import com.fengniao.remind.ui.base.BasePresenter;
@@ -37,9 +41,27 @@ public class MainActivity extends BaseActivity {
 
     private List<Fragment> fragments;
 
+
+
+    private RemindService.MyBinder mBinder;
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBinder = (RemindService.MyBinder) service;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+
     @Override
     public void initView() {
         super.initView();
+        initService();
         setSupportActionBar(toolbar);
         List<String> titles = new ArrayList<>();
         titles.add(getString(R.string.title_tab_main_1));
@@ -52,6 +74,18 @@ public class MainActivity extends BaseActivity {
         viewPager.setAdapter(mFragmentAdapter);
         tabLayout.setupWithViewPager(viewPager);
 
+    }
+
+
+    public void initService() {
+        Intent intent = new Intent(this, RemindService.class);
+        startService(intent);
+        bindService(intent, connection, BIND_AUTO_CREATE);
+    }
+
+
+    public void locationListChanged(){
+        mBinder.startRemind();
     }
 
     @OnClick(R.id.fab_main)
@@ -74,6 +108,14 @@ public class MainActivity extends BaseActivity {
                 fragment.refreshList();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent(this, RemindService.class);
+        stopService(intent);
+        unbindService(connection);
     }
 
     @Override
