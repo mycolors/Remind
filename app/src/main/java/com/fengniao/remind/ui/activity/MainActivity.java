@@ -42,13 +42,13 @@ public class MainActivity extends BaseActivity {
     private List<Fragment> fragments;
 
 
-
     private RemindService.MyBinder mBinder;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mBinder = (RemindService.MyBinder) service;
+            startRemind();
         }
 
         @Override
@@ -56,7 +56,6 @@ public class MainActivity extends BaseActivity {
 
         }
     };
-
 
     @Override
     public void initView() {
@@ -73,7 +72,6 @@ public class MainActivity extends BaseActivity {
         FragmentAdapter mFragmentAdapter = new FragmentAdapter(getSupportFragmentManager(), fragments, titles);
         viewPager.setAdapter(mFragmentAdapter);
         tabLayout.setupWithViewPager(viewPager);
-
     }
 
 
@@ -84,7 +82,7 @@ public class MainActivity extends BaseActivity {
     }
 
 
-    public void locationListChanged(){
+    public void locationListChanged() {
         mBinder.startRemind();
     }
 
@@ -98,6 +96,11 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    public void startRemind() {
+        if (mBinder != null)
+            mBinder.startRemind();
+    }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -105,16 +108,15 @@ public class MainActivity extends BaseActivity {
         if (requestCode == TYPE_LOCATION && resultCode == RESULT_OK) {
             LocationListFragment fragment = (LocationListFragment) fragments.get(1);
             if (fragment != null) {
-                fragment.refreshList();
+                fragment.resetList();
             }
         }
+        startRemind();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Intent intent = new Intent(this, RemindService.class);
-        stopService(intent);
         unbindService(connection);
     }
 
@@ -127,6 +129,7 @@ public class MainActivity extends BaseActivity {
     protected int provideContentViewId() {
         return R.layout.activity_main;
     }
+
 
 
 }

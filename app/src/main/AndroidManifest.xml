@@ -60,7 +60,19 @@
 
         <service
             android:name=".service.RemindService"
-            android:enabled="true" />
+            android:enabled="true">
+
+        </service>
+
+        <!--监听广播，拉起service-->
+        <!--<receiver android:name=".service.ProtectRemindReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="com.fengniao.reciver.protect" />-->
+                <!--<action android:name="android.intent.action.BOOT_COMPLETED" />-->
+                <!--<action android:name="android.intent.action.USER_PRESENT" />-->
+                <!--<action android:name="android.intent.action.PACKAGE_RESTARTED" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
     </application>
 
 

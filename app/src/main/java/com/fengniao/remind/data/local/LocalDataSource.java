@@ -79,7 +79,28 @@ public class LocalDataSource {
         if (cursor != null) cursor.close();
         db.close();
         return list;
+    }
 
+
+    public Location getLocation(long id) {
+        Location location = new Location();
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM Location WHERE " + _ID + " = ?",
+                new String[]{id + ""});
+        if (cursor != null && cursor.moveToFirst()) {
+            location.setId(cursor.getLong(cursor.getColumnIndexOrThrow(_ID)));
+            location.setActivate(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NAME_ACITVATE)) == 1);
+            location.setName(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME_NAME)));
+            location.setAddress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME_ADDRESS)));
+            location.setCity(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME_CITY)));
+            location.setPostCode(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME_POST_CODE)));
+            location.setLatitude(cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NAME_LATITUDE)));
+            location.setLongitude(cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NAME_LONGITUDE)));
+        }
+        if (cursor != null)
+            cursor.close();
+        db.close();
+        return location;
     }
 
 
@@ -124,9 +145,18 @@ public class LocalDataSource {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACITVATE, true);
-        String selection = _ID + "LIKE ?";
+        String selection = _ID + " LIKE ?";
         String[] selectionArgs = {location.getId() + ""};
         int code = db.update(TABLE_NAME, values, selection, selectionArgs);
+        db.close();
+        return code > 0;
+    }
+
+    public boolean deleteLocation(Location location) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        String selection = _ID + " LIKE ?";
+        String[] selectionArgs = {location.getId() + ""};
+        int code = db.delete(TABLE_NAME, selection, selectionArgs);
         db.close();
         return code > 0;
     }

@@ -1,4 +1,4 @@
-package com.fengniao.remind.ui;
+package com.fengniao.remind.ui.adapter;
 
 
 import android.content.Context;

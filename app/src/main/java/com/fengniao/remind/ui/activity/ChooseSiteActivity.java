@@ -1,12 +1,8 @@
 package com.fengniao.remind.ui.activity;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -30,8 +26,7 @@ import android.widget.Toast;
 import com.baidu.mapapi.search.core.PoiInfo;
 import com.fengniao.remind.R;
 import com.fengniao.remind.map.MapManager;
-import com.fengniao.remind.service.RemindService;
-import com.fengniao.remind.ui.SearchListAdapter;
+import com.fengniao.remind.ui.adapter.SearchListAdapter;
 import com.fengniao.remind.ui.base.BaseActivity;
 import com.fengniao.remind.ui.present.ChooseSiteAtPresent;
 import com.fengniao.remind.ui.view.ChooseSiteAtI;
@@ -61,19 +56,19 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
 
     private SearchListAdapter mAdapter;
 
-    private RemindService.MyBinder mBinder;
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mBinder = (RemindService.MyBinder) service;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
+//    private RemindService.MyBinder mBinder;
+//
+//    private ServiceConnection connection = new ServiceConnection() {
+//        @Override
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            mBinder = (RemindService.MyBinder) service;
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//
+//        }
+//    };
 
     @Override
     public void initView() {
@@ -83,7 +78,7 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         mManager.enableShowMyLocation(true);
         mManager.enableFollow(true);
         mPresenter.start();
-        initService();
+//        initService();
 //        initPopupWindow();
         searchList.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new SearchListAdapter(this);
@@ -136,12 +131,12 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         });
     }
 
-
-    public void initService() {
-        Intent intent = new Intent(this, RemindService.class);
-        startService(intent);
-        bindService(intent, connection, BIND_AUTO_CREATE);
-    }
+//
+//    public void initService() {
+//        Intent intent = new Intent(this, RemindService.class);
+//        startService(intent);
+//        bindService(intent, connection, BIND_AUTO_CREATE);
+//    }
 
     @OnClick(R.id.my_location)
     public void onClick(View view) {
@@ -279,7 +274,7 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
                 return false;
             }
             if (mPresenter.saveLocation()) {
-                mBinder.startRemind();
+//                mBinder.startRemind();
                 setResult(RESULT_OK);
                 finish();
             } else {
@@ -309,9 +304,9 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
         mManager.onDestroy();
-        Intent intent = new Intent(this, RemindService.class);
-        stopService(intent);
-        unbindService(connection);
+//        Intent intent = new Intent(this, RemindService.class);
+//        stopService(intent);
+//        unbindService(connection);
     }
 
     @Override
