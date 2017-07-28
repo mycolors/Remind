@@ -77,6 +77,7 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         getLocationPermission();
         mManager.enableShowMyLocation(true);
         mManager.enableFollow(true);
+        mManager.showMyDirection();
         mPresenter.start();
 //        initService();
 //        initPopupWindow();

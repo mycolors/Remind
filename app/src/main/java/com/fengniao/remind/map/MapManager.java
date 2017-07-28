@@ -3,6 +3,11 @@ package com.fengniao.remind.map;
 
 import android.app.Activity;
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -14,10 +19,13 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.location.Poi;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.TextureMapView;
 import com.baidu.mapapi.model.LatLng;
@@ -31,6 +39,8 @@ public class MapManager {
 
     //当前城市
     private String city;
+
+    private float mLastX = -1;
 
     //是否开启跟随
     private boolean isFollow;
@@ -51,6 +61,9 @@ public class MapManager {
 
     private OnMapStatusChangeListener mOnMapStatusChangeListener;
 
+    private MyOrientationListener myOrientationListener;
+
+
     public MapManager(Context context) {
         this.mContext = context.getApplicationContext();
         SDKInitializer.initialize(context.getApplicationContext());
@@ -63,6 +76,24 @@ public class MapManager {
         mBaiduMap = mMapView.getMap();
         initLocation();
         initListener();
+        initMyLoc();
+    }
+
+
+    public MapManager(Fragment fragment) {
+        this.mContext = fragment.getActivity().getApplicationContext();
+        mMapView = (TextureMapView) fragment.getActivity().findViewById(R.id.map_view);
+        mBaiduMap = mMapView.getMap();
+        initLocation();
+        initListener();
+        initMyLoc();
+    }
+
+
+    private void initMyLoc() {
+        //方向传感器监听
+        myOrientationListener = new MyOrientationListener(mContext);
+        myOrientationListener.start();
     }
 
 
@@ -223,7 +254,7 @@ public class MapManager {
                     sb.append(p.getId() + " " + p.getName() + " " + p.getRank());
                 }
             }
-            Log.i("BaiduLocationApiDem", sb.toString());
+//            Log.i("BaiduLocationApiDem", sb.toString());
 
             if (mBaiduMap != null) {
                 //显示自己位置
@@ -248,7 +279,6 @@ public class MapManager {
     public void enableLocation(boolean status) {
         if (status) startLocation();
         else stopLocation();
-
     }
 
     //是否开启定位
@@ -282,14 +312,31 @@ public class MapManager {
         return mBaiduMap.isMyLocationEnabled();
     }
 
+    public void showMyDirection() {
+        showMyDirection(MyLocationConfiguration.LocationMode.NORMAL, true, R.drawable.icon_direction);
+    }
+
+    public void showMyDirection(MyLocationConfiguration.LocationMode mode, boolean status, int resId) {
+        BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(resId);
+        MyLocationConfiguration configuration = new MyLocationConfiguration(
+                mode, status, bitmapDescriptor);
+        mBaiduMap.setMyLocationConfiguration(configuration);
+    }
+
 
     //更新自己位置信息
     public void updateMyLocationData(BDLocation location) {
         MyLocationData.Builder builder = new MyLocationData.Builder();
         builder.latitude(location.getLatitude());
         builder.longitude(location.getLongitude());
+        //设定图标方向
+        builder.direction(mLastX);
+        Log.i("test", mLastX + "");
+        //获取定位精准度
+        builder.accuracy(location.getRadius());
         MyLocationData data = builder.build();
         mBaiduMap.setMyLocationData(data);
+
     }
 
     //是否开启地图跟随移动
@@ -378,6 +425,8 @@ public class MapManager {
             mMapView.onDestroy();
         if (mLocationClient != null)
             stopLocation();
+        if (myOrientationListener!=null)
+            myOrientationListener.stop();
     }
 
 
@@ -399,5 +448,59 @@ public class MapManager {
 
         void onMapStatusChangeFinish(MapStatus var1);
     }
+
+
+    private class MyOrientationListener implements SensorEventListener {
+        //传感器管理者
+        private SensorManager mSensorManager;
+
+        private Context mContext;
+
+        //传感器
+        private Sensor mSensor;
+
+        //构造函数
+        public MyOrientationListener(Context context) {
+            this.mContext = context;
+        }
+
+        //开始监听
+        @SuppressWarnings("deprecation")
+        public void start() {
+            //获得传感器管理者
+            mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+            if (mSensorManager != null) {//是否支持
+                //获得方向传感器
+                mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+                if (mSensor != null) {//如果手机有方向传感器，精度可以自己去设置，注册方向传感器
+                    mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_UI);
+                }
+            }
+        }
+
+        //结束监听
+        public void stop() {
+            //取消注册的方向传感器
+            mSensorManager.unregisterListener(this);
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            //判断返回的传感器类型是不是方向传感器
+            if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
+                //只获取x的值
+                mLastX = event.values[SensorManager.DATA_X];
+            }
+
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+        }
+
+
+    }
+
 
 }
