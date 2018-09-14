@@ -5,11 +5,10 @@
     android:layout_height="match_parent"
     tools:context="com.fengniao.remind.ui.activity.ChooseSiteActivity">
 
-    <com.baidu.mapapi.map.TextureMapView
+    <com.amap.api.maps.MapView
         android:id="@+id/map_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent" />
+        android:layout_height="match_parent" />
 
     <TextView
         android:id="@+id/text_address"
@@ -36,8 +35,8 @@
 
         <android.support.v7.widget.CardView
             android:layout_width="match_parent"
-            android:layout_margin="@dimen/view_margin"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/view_margin">
 
             <EditText
                 android:id="@+id/edit_search"
@@ -63,8 +62,6 @@
         android:background="@drawable/bg_my_location"
         android:padding="@dimen/view_margin"
         android:src="@drawable/icon_my_location" />
-
-
 
 
 </FrameLayout>

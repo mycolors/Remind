@@ -16,9 +16,9 @@ public abstract class BaseActivity<V, T extends BasePresenter<V>> extends AppCom
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         init();
-
         setContentView(provideContentViewId());
         ButterKnife.bind(this);
+        onViewCreated(savedInstanceState);
 
         //判断是否使用MVP模式
         mPresenter = createPresent();
@@ -28,6 +28,11 @@ public abstract class BaseActivity<V, T extends BasePresenter<V>> extends AppCom
 
         initView();
         initData();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -42,6 +47,11 @@ public abstract class BaseActivity<V, T extends BasePresenter<V>> extends AppCom
 
     //在setContentView()前调用，可以设置WindowFeature(如：this.requestWindowFeature(Window.FEATURE_NO_TITLE);)
     public void init() {
+
+    }
+
+    //在setContentView()后调用,view已经创建，可以在这里进行一些view的意外销毁重建工作
+    public void onViewCreated(Bundle savedInstanceState) {
 
     }
 

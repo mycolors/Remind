@@ -1,8 +1,10 @@
 package com.fengniao.remind.ui.view;
 
 
-import com.baidu.mapapi.search.core.PoiInfo;
-import com.fengniao.remind.map.MapManager;
+import com.amap.api.maps.MapView;
+import com.amap.api.services.core.PoiItem;
+import com.fengniao.remind.data.Location;
+import com.fengniao.remind.map.GDMapManger;
 
 import java.util.List;
 
@@ -14,11 +16,9 @@ public interface ChooseSiteAtI {
 
     void hidePopupWindow();
 
-    void updateSearchList(List<PoiInfo> list);
+    void updateSearchList(List<PoiItem> list);
 
     void clearEditText();
-
-    MapManager getMapManager();
 
     void showSearchList();
 
@@ -32,5 +32,8 @@ public interface ChooseSiteAtI {
 
     void closeVirtualKeyboard();
 
+    MapView getMapView();
+
+    void updateAddress(String address);
 
 }

@@ -4,14 +4,19 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 
+import com.amap.api.maps.Projection;
 import com.fengniao.remind.R;
+import com.fengniao.remind.RemindServiceInf;
+import com.fengniao.remind.service.ProtectService;
 import com.fengniao.remind.service.RemindService;
 import com.fengniao.remind.ui.adapter.FragmentAdapter;
 import com.fengniao.remind.ui.base.BaseActivity;
@@ -42,12 +47,13 @@ public class MainActivity extends BaseActivity {
     private List<Fragment> fragments;
 
 
-    private RemindService.MyBinder mBinder;
+
+    private RemindServiceInf mBinder;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mBinder = (RemindService.MyBinder) service;
+            mBinder =RemindServiceInf.Stub.asInterface(service);
             startRemind();
         }
 
@@ -79,11 +85,17 @@ public class MainActivity extends BaseActivity {
         Intent intent = new Intent(this, RemindService.class);
         startService(intent);
         bindService(intent, connection, BIND_AUTO_CREATE);
+        Intent intent1 = new Intent(this, ProtectService.class);
+        startService(intent1);
     }
 
 
     public void locationListChanged() {
-        mBinder.startRemind();
+        try {
+            mBinder.startRemind();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     @OnClick(R.id.fab_main)
@@ -97,8 +109,14 @@ public class MainActivity extends BaseActivity {
     }
 
     public void startRemind() {
-        if (mBinder != null)
-            mBinder.startRemind();
+        if (mBinder != null){
+            try {
+                mBinder.startRemind();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 
@@ -129,7 +147,6 @@ public class MainActivity extends BaseActivity {
     protected int provideContentViewId() {
         return R.layout.activity_main;
     }
-
 
 
 }

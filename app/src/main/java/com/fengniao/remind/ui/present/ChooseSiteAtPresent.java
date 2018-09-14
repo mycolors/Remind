@@ -2,41 +2,43 @@ package com.fengniao.remind.ui.present;
 
 
 import android.text.TextUtils;
-import android.widget.Toast;
+import android.view.MotionEvent;
 
-import com.baidu.mapapi.map.MapStatus;
-import com.baidu.mapapi.map.MapStatusUpdateFactory;
-import com.baidu.mapapi.model.LatLng;
-import com.baidu.mapapi.search.core.PoiInfo;
-import com.baidu.mapapi.search.core.SearchResult;
-import com.baidu.mapapi.search.geocode.GeoCodeResult;
-import com.baidu.mapapi.search.geocode.GeoCoder;
-import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
-import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
-import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
-import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
-import com.baidu.mapapi.search.poi.PoiCitySearchOption;
-import com.baidu.mapapi.search.poi.PoiDetailResult;
-import com.baidu.mapapi.search.poi.PoiIndoorResult;
-import com.baidu.mapapi.search.poi.PoiResult;
-import com.baidu.mapapi.search.poi.PoiSearch;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.model.CameraPosition;
+import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.core.PoiItem;
+import com.amap.api.services.geocoder.GeocodeResult;
+import com.amap.api.services.geocoder.GeocodeSearch;
+import com.amap.api.services.geocoder.RegeocodeQuery;
+import com.amap.api.services.geocoder.RegeocodeResult;
+import com.amap.api.services.poisearch.PoiResult;
+import com.amap.api.services.poisearch.PoiSearch;
 import com.fengniao.remind.data.Location;
 import com.fengniao.remind.data.local.LocalDataSource;
-import com.fengniao.remind.map.MapManager;
+import com.fengniao.remind.map.GDMapManger;
+import com.fengniao.remind.ui.activity.ChooseSiteActivity;
 import com.fengniao.remind.ui.base.BaseActivity;
 import com.fengniao.remind.ui.base.BasePresenter;
 import com.fengniao.remind.ui.view.ChooseSiteAtI;
+import com.fengniao.remind.util.PzLogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChooseSiteAtPresent extends BasePresenter<ChooseSiteAtI> {
 
-    private List<PoiInfo> mList;
-    private PoiSearch mPoiSearch;
-    private GeoCoder mGeoCoder = null;
-    private LatLng mLatLng;
-    private Location mLocation;
+    private static final String TAG = ChooseSiteActivity.class.getSimpleName();
+
+    private List<PoiItem> mList;
+
+
+    private GDMapManger gdMapManger;
+
+    private RegeocodeResult mRegeocodeResult;
+
+    //地理编码
+    private GeocodeSearch geocoderSearch;
 
     public ChooseSiteAtPresent(BaseActivity mContext) {
         super(mContext);
@@ -45,53 +47,52 @@ public class ChooseSiteAtPresent extends BasePresenter<ChooseSiteAtI> {
 
     public void init() {
         mList = new ArrayList<>();
-        mPoiSearch = PoiSearch.newInstance();
-        mGeoCoder = GeoCoder.newInstance();
-        getView().getMapManager().setOnMapStatusChangeListener(new MapManager.OnMapStatusChangeListener() {
-            @Override
-            public void onMapStatusChangeStart(MapStatus var1) {
+        gdMapManger = new GDMapManger(mContext, getView().getMapView());
+        gdMapManger.showMyLocation(true);
+        gdMapManger.setZoomLevel(18f);
 
+        geocoderSearch = new GeocodeSearch(mContext);
+        geocoderSearch.setOnGeocodeSearchListener(new GeocodeSearch.OnGeocodeSearchListener() {
+            @Override
+            public void onRegeocodeSearched(RegeocodeResult regeocodeResult, int i) {
+                PzLogUtil.i(TAG, "center address is " + regeocodeResult.getRegeocodeAddress().getFormatAddress());
+                mRegeocodeResult = regeocodeResult;
+                getView().updateAddress(regeocodeResult.getRegeocodeAddress().getFormatAddress());
             }
 
             @Override
-            public void onMapStatusChange(MapStatus var1) {
+            public void onGeocodeSearched(GeocodeResult geocodeResult, int i) {
 
-            }
-
-            @Override
-            public void onMapStatusChangeFinish(MapStatus var1) {
-                //获取屏幕中间中间的经纬度
-                mLatLng = new LatLng(var1.target.latitude, var1.target.longitude);
-                mGeoCoder.reverseGeoCode(new ReverseGeoCodeOption().location(mLatLng));
             }
         });
-        mGeoCoder.setOnGetGeoCodeResultListener(new OnGetGeoCoderResultListener() {
-            @Override
-            public void onGetGeoCodeResult(GeoCodeResult geoCodeResult) {
 
-            }
+        final GDMapManger gdMapManger = getMapManger();
+        if (gdMapManger != null) {
+            gdMapManger.setOnMapTouchListener(new AMap.OnMapTouchListener() {
+                @Override
+                public void onTouch(MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
+                        gdMapManger.enableFollow(false);
+                    }
+                }
+            });
+            gdMapManger.setOnCameraChangeListener(new AMap.OnCameraChangeListener() {
+                @Override
+                public void onCameraChange(CameraPosition cameraPosition) {
+                    PzLogUtil.i(TAG, "center lat/lng is " + cameraPosition.target.toString());
+                    RegeocodeQuery query = new RegeocodeQuery(new LatLonPoint(cameraPosition.target.latitude,
+                            cameraPosition.target.longitude), 1000f, GeocodeSearch.AMAP);
+                    geocoderSearch.getFromLocationAsyn(query);
+                }
 
-            //根据屏幕中间的经纬度获取地址
-            @Override
-            public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
-                if (reverseGeoCodeResult == null ||
-                        reverseGeoCodeResult.error != SearchResult.ERRORNO.NO_ERROR) {
-                    Toast.makeText(mContext, "未能找到结果", Toast.LENGTH_SHORT).show();
-                    return;
+                @Override
+                public void onCameraChangeFinish(CameraPosition cameraPosition) {
+
                 }
-                getView().getMapManager().clear();
-                getView().getMapManager().setMapStatus(MapStatusUpdateFactory.newLatLng(reverseGeoCodeResult.getLocation()));
-                getView().setAddressText(reverseGeoCodeResult.getAddress());
-                if (mLocation == null) {
-                    mLocation = new Location();
-                }
-                mLocation.setName(reverseGeoCodeResult.getAddressDetail().countryName);
-                mLocation.setAddress(reverseGeoCodeResult.getAddress());
-                mLocation.setCity(reverseGeoCodeResult.getAddressDetail().city);
-                mLocation.setLatitude(reverseGeoCodeResult.getLocation().latitude);
-                mLocation.setLongitude(reverseGeoCodeResult.getLocation().longitude);
-            }
-        });
+            });
+
+        }
+
     }
 
     @Override
@@ -109,51 +110,49 @@ public class ChooseSiteAtPresent extends BasePresenter<ChooseSiteAtI> {
 //            getView().hidePopupWindow();
             return;
         }
-        OnGetPoiSearchResultListener poiSearchResultListener = new OnGetPoiSearchResultListener() {
+        //根据关键子搜索地图poi
+        GDMapManger.searchByKeyword(mContext, key, "", getCity(), new PoiSearch.OnPoiSearchListener() {
             @Override
-            public void onGetPoiResult(PoiResult poiResult) {
+            public void onPoiSearched(PoiResult poiResult, int i) {
+                PzLogUtil.i(TAG, "map search count is " + i);
                 mList.clear();
-                if (poiResult.getAllPoi() != null) {
-                    mList.addAll(poiResult.getAllPoi());
-//                    getView().showPopupWindow();
-                    getView().showSearchList();
-                }
+                mList.addAll(poiResult.getPois());
+                getView().showSearchList();
                 getView().updateSearchList(mList);
             }
 
             @Override
-            public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+            public void onPoiItemSearched(PoiItem poiItem, int i) {
 
             }
-
-            @Override
-            public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
-
-            }
-        };
-        mPoiSearch.setOnGetPoiSearchResultListener(poiSearchResultListener);
-        String city = "";
-        if (getView().getMapManager().getMyLocation() != null) {
-            city = getView().getMapManager().getMyLocation().getCity();
-        }
-        if (TextUtils.isEmpty(city)) {
-            city = "北京";
-        }
-        mPoiSearch.searchInCity(new PoiCitySearchOption().city(city).keyword(key));
+        });
     }
 
-
-    public LatLng getLatLng() {
-        return mLatLng;
+    private String getCity() {
+        if (mRegeocodeResult == null)
+            return "";
+        return mRegeocodeResult.getRegeocodeAddress().getCity();
     }
+
 
     public boolean saveLocation() {
-        if (mLocation != null) {
-            mLocation.setActivate(true);
-            return LocalDataSource.getInstance(mContext).saveLocation(mLocation);
-        } else {
-            return false;
+        if (mRegeocodeResult != null) {
+            Location location = new Location();
+            location.setName(mRegeocodeResult.getRegeocodeAddress().getDistrict());
+            location.setAddress(mRegeocodeResult.getRegeocodeAddress().getFormatAddress());
+            location.setCity(mRegeocodeResult.getRegeocodeAddress().getCity());
+            location.setLatitude(mRegeocodeResult.getRegeocodeQuery().getPoint().getLatitude());
+            location.setLongitude(mRegeocodeResult.getRegeocodeQuery().getPoint().getLongitude());
+            location.setPostCode(mRegeocodeResult.getRegeocodeAddress().getCityCode());
+            location.setActivate(true);
+            return LocalDataSource.getInstance(mContext).saveLocation(location);
         }
+        return false;
     }
+
+    public GDMapManger getMapManger() {
+        return gdMapManger;
+    }
+
 
 }

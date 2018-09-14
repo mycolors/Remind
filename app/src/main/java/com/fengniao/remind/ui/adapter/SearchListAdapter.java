@@ -8,7 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.baidu.mapapi.search.core.PoiInfo;
+import com.amap.api.services.core.PoiItem;
+import com.amap.api.maps.model.Poi;
 import com.fengniao.remind.R;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import butterknife.ButterKnife;
 
 public class SearchListAdapter extends RecyclerView.Adapter<SearchListAdapter.MyViewHolder> {
 
-    private List<PoiInfo> mList = new ArrayList<>();
+    private List<PoiItem> mList = new ArrayList<>();
 
     private Context mContext;
 
@@ -33,7 +34,7 @@ public class SearchListAdapter extends RecyclerView.Adapter<SearchListAdapter.My
         this.mContext = mContext;
     }
 
-    public void updateList(List<PoiInfo> list) {
+    public void updateList(List<PoiItem> list) {
         mList = list;
         notifyDataSetChanged();
     }
@@ -46,7 +47,7 @@ public class SearchListAdapter extends RecyclerView.Adapter<SearchListAdapter.My
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, final int position) {
-        holder.textTitle.setText(mList.get(position).name);
+        holder.textTitle.setText(mList.get(position).getTitle());
         if (mOnItemClickListener != null) {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -73,6 +74,6 @@ public class SearchListAdapter extends RecyclerView.Adapter<SearchListAdapter.My
     }
 
     public interface OnItemClickListener {
-        void onItemClick(PoiInfo poiInfo);
+        void onItemClick(PoiItem poiItem);
     }
 }

@@ -2,7 +2,9 @@ package com.fengniao.remind.ui.activity;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -13,7 +15,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -23,9 +24,12 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.mapapi.search.core.PoiInfo;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.services.core.PoiItem;
 import com.fengniao.remind.R;
-import com.fengniao.remind.map.MapManager;
+import com.fengniao.remind.map.GDMapManger;
+import com.fengniao.remind.service.RemindService;
 import com.fengniao.remind.ui.adapter.SearchListAdapter;
 import com.fengniao.remind.ui.base.BaseActivity;
 import com.fengniao.remind.ui.present.ChooseSiteAtPresent;
@@ -38,6 +42,10 @@ import butterknife.BindView;
 import butterknife.OnClick;
 
 public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAtPresent> implements ChooseSiteAtI {
+
+    private static final String TAG = ChooseSiteActivity.class.getSimpleName();
+
+
     @BindView(R.id.edit_search)
     EditText editSearch;
 
@@ -50,48 +58,31 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
     @BindView(R.id.text_address)
     TextView textAddress;
 
-    private MapManager mManager;
+    @BindView(R.id.map_view)
+    MapView mapView;
 
     private PopupWindow mPopup;
 
     private SearchListAdapter mAdapter;
 
-//    private RemindService.MyBinder mBinder;
-//
-//    private ServiceConnection connection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            mBinder = (RemindService.MyBinder) service;
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//
-//        }
-//    };
+
+
+    @Override
+    public void onViewCreated(Bundle savedInstanceState) {
+        super.onViewCreated(savedInstanceState);
+        mapView.onCreate(savedInstanceState);
+    }
 
     @Override
     public void initView() {
         super.initView();
-        mManager = new MapManager(this);
         getLocationPermission();
-        mManager.enableShowMyLocation(true);
-        mManager.enableFollow(true);
-        mManager.showMyDirection();
         mPresenter.start();
-//        initService();
-//        initPopupWindow();
+
         searchList.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new SearchListAdapter(this);
         searchList.setAdapter(mAdapter);
-        mManager.setOnMapTouchListener(new MapManager.OnMapTouchListener() {
-            @Override
-            public void onTouch(MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                    mManager.enableFollow(false);
-                }
-            }
-        });
+
         editSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,11 +109,12 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         });
         mAdapter.setOnItemClickListener(new SearchListAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(PoiInfo poiInfo) {
+            public void onItemClick(PoiItem poiItem) {
                 //在地图中心显示选择的地址
-                mManager.showLocationOnMapCenter(poiInfo.location);
-                //关闭地图跟随
-                mManager.enableFollow(false);
+                mPresenter.getMapManger().animateCamera(new LatLng(poiItem.getLatLonPoint().getLatitude(),
+                        poiItem.getLatLonPoint().getLongitude()));
+//                //关闭地图跟随
+                mPresenter.getMapManger().enableFollow(false);
                 //显示marker
                 showMarker();
                 hideSearchList();
@@ -132,18 +124,13 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         });
     }
 
-//
-//    public void initService() {
-//        Intent intent = new Intent(this, RemindService.class);
-//        startService(intent);
-//        bindService(intent, connection, BIND_AUTO_CREATE);
-//    }
 
     @OnClick(R.id.my_location)
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.my_location:
-                mManager.enableFollow(true);
+                mPresenter.getMapManger().enableFollow(true);
+                mPresenter.getMapManger().setZoomLevel(18f);
                 hideMarker();
                 break;
         }
@@ -164,7 +151,7 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
                         1);
             }
         } else {
-            mManager.enableLocation(true);
+//            mManager.enableLocation(true);
         }
     }
 
@@ -172,7 +159,7 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            mManager.enableLocation(true);
+//            mManager.enableLocation(true);
         } else {
             Toast.makeText(this, "获取权限失败", Toast.LENGTH_SHORT).show();
         }
@@ -203,18 +190,13 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
     }
 
     @Override
-    public void updateSearchList(List<PoiInfo> list) {
+    public void updateSearchList(List<PoiItem> list) {
         mAdapter.updateList(list);
     }
 
     @Override
     public void clearEditText() {
         editSearch.setText("");
-    }
-
-    @Override
-    public MapManager getMapManager() {
-        return mManager;
     }
 
     @Override
@@ -248,6 +230,16 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
         if (imm != null) {
             imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
         }
+    }
+
+    @Override
+    public MapView getMapView() {
+        return mapView;
+    }
+
+    @Override
+    public void updateAddress(String address) {
+        textAddress.setText(address);
     }
 
 
@@ -290,24 +282,23 @@ public class ChooseSiteActivity extends BaseActivity<ChooseSiteAtI, ChooseSiteAt
     protected void onResume() {
         super.onResume();
         //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
-        mManager.onResume();
+        mPresenter.getMapManger().onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
-        mManager.onPause();
+        mPresenter.getMapManger().onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
-        mManager.onDestroy();
-//        Intent intent = new Intent(this, RemindService.class);
-//        stopService(intent);
-//        unbindService(connection);
+        mPresenter.getMapManger().onDestroy();
+        Intent intent = new Intent(this, RemindService.class);
+        stopService(intent);
     }
 
     @Override
